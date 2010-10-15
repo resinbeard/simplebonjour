@@ -1,0 +1,27 @@
+simplebonjour
+written by murray foster, 10.15.10
+mrafoster@gmail.com
+
+this is a simple pure-data external that enables support for
+the bonjour zeroconf implementation within a user's patch.
+
+INSTALL:
+make sure to edit makefile with the location of your pd's sources
+install bonjour support for your operating system (specifically dns_sd.h)
+$ make
+make sure simplebonjour is in pd's startup path
+
+OPERATION:
+simplebonjour is extremely simple.  
+
+it will allow you to do two things:
+find available services of specific type
+resolve discovered services
+
+send a message containing "browse _yourservice._type" to the object's inlet.  shortly all discovered services will be output as symbols thru right outlet. send a message containing "resolve your-servicename" to the object's inlet.  shortly a float containing the service's port number will output from simplebonjour's left outlet.  then continue to configure remaining ports and prefixes in pure-data!
+
+TO-DO:
+add cross-platform support (only tested on linux)
+add support for non-local domains
+(..)
+

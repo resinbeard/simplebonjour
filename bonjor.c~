@@ -1,0 +1,114 @@
+/*
+	bonjor.c
+	10.3.2010 copyleft murray foster
+	takes 3 arguments: low-bound, high-bound, and step width
+	takes bang messages and returns values from a random walk
+*/
+#include <dns_sd.h> // bonjour mDNS
+#include <m_pd.h> // pd interface libraries
+#include <stdlib.h> // for rand()
+#include <string.h>
+// networking
+#include <htmsocket.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <ctype.h>
+
+
+static t_class *bonjor_class;
+
+typedef struct _bonjor {
+  t_object  x_obj;
+}
+t_bonjor;
+
+void bonjor_bang(t_bonjor *x)
+{
+  post("This is bonjor's reaction to a bang.");
+}
+
+static void bonjor_connect(t_bonjor *x, t_symbol *s, int argc, t_atom *argv)
+ // t_symbol *hostname, t_floatarg fportno, int argc, t_atom *argv)
+{
+  float fportno=0;
+  t_symbol *hostname;
+  int portno = fportno;
+  short ttl=-1;
+  char *protocolStr;
+  /* create a socket */
+
+  if (argc < 2)
+	  return;
+
+  if (argv[0].a_type==A_SYMBOL)
+	  hostname = argv[0].a_w.w_symbol;
+  else
+	  return;
+
+  if (argv[1].a_type==A_FLOAT)
+	  portno = (int)argv[1].a_w.w_float;
+  else
+	  return;
+
+  if (argc >= 3) {
+	  if (argv[2].a_type==A_FLOAT)
+		  ttl = (short)(unsigned char)argv[2].a_w.w_float;
+	  else
+		  return;
+  }
+
+	//	make sure handle is available
+  if(x->x_htmsocket == 0)
+  {
+		x->x_htmsocket = OpenHTMSocket(hostname->s_name, portno, &ttl);
+		if (!x->x_htmsocket) {
+            post("bonjor: Couldn't open socket: ");
+            if (ttl==-2)
+                post("bonjor: Multicast group range 224.0.0.[0-255] is reserved.\n");
+        }
+    else
+	{
+      switch (x->x_protocol)
+      {
+        case SOCK_DGRAM:
+          protocolStr = "UDP";
+          break;
+        case SOCK_STREAM:
+          protocolStr = "TCP";
+          break;
+        default:
+          protocolStr = "unknown";
+          break;
+	  }
+      if (ttl>=0)
+          post("bonjor: connected to port %s:%d (hSock=%d) protocol = %s ttl = %d",
+               hostname->s_name, portno, x->x_htmsocket, protocolStr, ttl);
+      else
+          post("bonjor: connected to port %s:%d (hSock=%d) protocol = %s",
+               hostname->s_name, portno, x->x_htmsocket, protocolStr);
+      outlet_float(x->x_obj.ob_outlet, 1);
+    }
+  }
+  else
+    post("call to bonjor_connect() against unavailable socket handle");
+
+}
+
+void *bonjor_new(void)
+{
+  t_bonjor *x = (t_bonjor *)pd_new(bonjor_class);
+
+  return (void *)x;
+}
+
+void bonjor_setup(void) {
+  bonjor_class = class_new(gensym("bonjor"),
+        (t_newmethod)bonjor_new,
+        0, sizeof(t_bonjor),
+        CLASS_DEFAULT, 0);
+  class_addbang(bonjor_class, bonjor_bang);
+  class_addmethod(bonjor_class, (t_method)bonjor_connect, gensym("connect"), 0);
+  setenv("AVAHI_COMPAT_NOWARN", "shut up", 1);
+}
+
