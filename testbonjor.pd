@@ -1,10 +1,14 @@
-#N canvas 858 298 450 300 10;
+#N canvas 864 340 450 300 10;
 #X msg 65 57 browse _monome-osc._udp;
 #X obj 210 115 simplebonjour;
 #X symbolatom 315 196 10 0 0 0 - - -;
-#X msg 246 56 resolve m256-114;
 #X floatatom 197 184 5 0 0 0 - - -;
+#X msg 247 56 resolve m256-114 local;
+#X text 329 81 or;
+#X msg 322 105 resolve m256-114;
+#X text 312 133 will work fine too;
+#X text 324 144 (if on a local domain);
 #X connect 0 0 1 0;
-#X connect 1 0 4 0;
+#X connect 1 0 3 0;
 #X connect 1 1 2 0;
-#X connect 3 0 1 0;
+#X connect 4 0 1 0;

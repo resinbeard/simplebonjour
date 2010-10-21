@@ -20,12 +20,12 @@
 #endif
 
 #include <ctype.h>
-#include <stdio.h>			// For stdout, stderr
-#include <stdlib.h>			// For exit()
-#include <string.h>			// For strlen(), strcpy()
-#include <errno.h>			// For errno, EINTR
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <time.h>
-#include <sys/types.h>		// For u_char
+#include <sys/types.h>
 
 #ifdef _WIN32
 	#include <winsock2.h>
@@ -192,7 +192,7 @@ static void printtimestamp(void)
 #define DomainMsg(X) (((X) & kDNSServiceFlagsDefault) ? "(Default)" : \
                       ((X) & kDNSServiceFlagsAdd)     ? "Added"     : "Removed")
 
-
+//browse function callback
 static void DNSSD_API browse_reply(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
 	const char *replyName, const char *replyType, const char *replyDomain, void *context)
 	{
@@ -208,7 +208,7 @@ static void DNSSD_API browse_reply(DNSServiceRef sdref, const DNSServiceFlags fl
 	namepointer = replyName;
 
 	}
-
+//resolve function callback
 static void DNSSD_API resolve_reply(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
 	const char *fullname, const char *hosttarget, uint16_t opaqueport, uint16_t txtLen, const unsigned char *txtRecord, void *context)
 	{
@@ -231,6 +231,7 @@ static void DNSSD_API resolve_reply(DNSServiceRef sdref, const DNSServiceFlags f
 	if (!(flags & kDNSServiceFlagsMoreComing)) fflush(stdout);
 	}
 
+//event handler for browsing events
 static void HandleBrowseEvents(t_simplebonjour *x)
 	{
 	int dns_sd_fd  = client    ? DNSServiceRefSockFD(client   ) : -1;
@@ -278,6 +279,7 @@ static void HandleBrowseEvents(t_simplebonjour *x)
         }
 	}
 
+//event handler for resolving events
 static void HandleResolveEvents(t_simplebonjour *x)
 	{
 	int dns_sd_fd  = client    ? DNSServiceRefSockFD(client   ) : -1;
@@ -289,6 +291,7 @@ static void HandleResolveEvents(t_simplebonjour *x)
 	int stopimm = 0;
 
 	if (dns_sd_fd2 > dns_sd_fd) nfds = dns_sd_fd2 + 1;
+
     while(stopimm == 0)
     {
 		// 1. Set up the fd_set as usual here.
@@ -316,18 +319,20 @@ static void HandleResolveEvents(t_simplebonjour *x)
 			    if(errorfilter == 1)
                 {
                     errorfilter = 0;
-                    post("simplebonjour: service resolved on port #%d", (int)portglobal);
+                    post("simplebonjour: service resolved on port %d", (int)portglobal);
                     outlet_float(x->a_out, portglobal);
                 }
+                else
+                    post("simplebonjour: unable to resolve service");
                 stopimm = 1;
 			}
         }
 	}
 
-
+// on bang, provides some information about simplebonjour
 void simplebonjour_bang(t_simplebonjour *x)
 {
-  post("simplebonjour\npure-data external to interface with bonjour zeroconf implementation\nwritten by murray foster, 2010\nsee README for more information");
+  post("simplebonjour\npure-data external to interface with bonjour zeroconf-enabled servers\nwritten by murray foster, 2010\nsee README for more information");
 }
 
 
@@ -364,12 +369,22 @@ static void simplebonjour_browse(t_simplebonjour *x, t_symbol *s, int argc, t_at
 static void simplebonjour_resolve(t_simplebonjour *x, t_symbol *s, int argc, t_atom *argv)
 {
     char resolvetarget[MAXLENGTHSTRING];
+    char resolvedomain[MAXLENGTHSTRING];
+
+    char localstorage[MAXLENGTHSTRING];
+    localstorage[0] = '\0';
 
     resolvetarget[0] = '\0';
     atom_string(&argv[0], resolvetarget, MAXLENGTHSTRING);
+    resolvedomain[0] = '\0';
+    if(argv[1].a_type==A_SYMBOL)
+        atom_string(&argv[1], resolvedomain, MAXLENGTHSTRING);
+    else
+        strcpy(resolvedomain, "local");
 
-    x->err = DNSServiceResolve(&client, 0, opinterface, resolvetarget, x->servicetype, "local", resolve_reply, NULL);
+    x->err = DNSServiceResolve(&client, 0, opinterface, resolvetarget, x->servicetype, resolvedomain, resolve_reply, NULL);
     if (!client || x->err != kDNSServiceErr_NoError) { fprintf(stderr, "DNSService call failed %ld\n", (long int)x->err); post("DNSService call failed."); return (-1); }
+
     HandleResolveEvents(x);
 
     if (client   ) DNSServiceRefDeallocate(client   );
