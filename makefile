@@ -82,7 +82,7 @@ pd_darwin: $(TARGETS)
 DARWINCFLAGS = -DPD -O2 -Wall -W -Wshadow -Wstrict-prototypes \
     -Wno-unused -Wno-parentheses -Wno-switch
 
-DARWININCLUDE = -I$(PDSRCDIR) -ldns_sd
+DARWININCLUDE = -I$(PDSRCDIR)
 
 DARWINLDFLAGS = -bundle -undefined suppress -flat_namespace
 
