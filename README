@@ -13,10 +13,12 @@ amended readme
 general code cleanup
 
 INSTALL:
-make sure to edit makefile with the location of your pd's sources
-install bonjour support for your operating system (specifically dns_sd.h)
-$ make
-make sure simplebonjour is in pd's startup path
+1. make sure to edit makefile with the location of your pd's sources
+2. install bonjour support for your operating system (specifically dns_sd.h)
+   these are generally referred to as 'bonjour compatibility' libraries
+   for example, on Ubuntu package to install is "libavahi-compat-libdnssd1"
+3. $ make
+4. make sure simplebonjour is in pd's startup path
 
 OPERATION:
 simplebonjour is extremely simple.  
